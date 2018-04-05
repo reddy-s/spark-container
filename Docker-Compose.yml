@@ -1,0 +1,35 @@
+version: '3.2'
+services:
+  master:
+    image: reddy-s/spark:1.0
+    command: /bin/bash -c "/home/lib/spark-2.2.1-bin-hadoop2.7/bin/spark-class org.apache.spark.deploy.master.Master"
+    volumes:
+      - type: volume
+        source: cluster-data
+        target: /home/data
+    environment:
+      - MASTER_PORT_7077_TCP_ADDR=172.18.0.2
+      - MASTER_PORT_7077_TCP_PORT=7077
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+  db:
+    image: manoj10/postgres
+    ports:
+      - "5431:5430"
+  slave:
+    image: reddy-s/spark:1.0
+    command: /bin/bash -c "/home/lib/spark-2.2.1-bin-hadoop2.7/bin/spark-class org.apache.spark.deploy.worker.Worker 172.18.0.2:7077"
+    environment:
+      - MASTER_PORT_7077_TCP_ADDR=172.18.0.2
+      - MASTER_PORT_7077_TCP_PORT=7077
+    volumes:
+      - type: volume
+        source: cluster-data
+        target: /home/data
+    depends_on:
+      - master
+    links:
+      - master
+volumes:
+  cluster-data:
